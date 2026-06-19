@@ -1,9 +1,17 @@
+const Task = require('../models/Task');
+
+/**
+ * Task Controller
+ * Handles HTTP requests for task operations
+ */
+
+/**
+ * Get all tasks
+ */
 async function getAllTasks(req, res) {
     try {
-        // Call model
         const tasks = await Task.getAllTasks();
         
-        // Send response
         res.json({
             success: true,
             count: tasks.length,
@@ -17,15 +25,15 @@ async function getAllTasks(req, res) {
     }
 }
 
+/**
+ * Get a single task by ID
+ */
 async function getTaskById(req, res) {
     try {
-        // Extract ID from URL parameter
         const { id } = req.params;
         
-        // Call model
         const task = await Task.getTaskById(id);
         
-        // Check if found
         if (!task) {
             return res.status(404).json({
                 success: false,
@@ -33,7 +41,6 @@ async function getTaskById(req, res) {
             });
         }
         
-        // Send response
         res.json({
             success: true,
             data: task
@@ -46,15 +53,29 @@ async function getTaskById(req, res) {
     }
 }
 
+/**
+ * Create a new task
+ */
 async function createTask(req, res) {
     try {
         const taskData = req.body;
+        
+        // Validate
+        const validation = Task.validateTask(taskData);
+        if (!validation.valid) {
+            return res.status(400).json({
+                success: false,
+                errors: validation.errors
+            });
+        }
+        
         const newTask = await Task.createTask(taskData);
+        
         res.status(201).json({
             success: true,
+            message: 'Task created successfully',
             data: newTask
         });
-
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -62,13 +83,16 @@ async function createTask(req, res) {
         });
     }
 }
+
+/**
+ * Update an existing task
+ */
 async function updateTask(req, res) {
     try {
-        // Extract ID and updates
         const { id } = req.params;
         const updates = req.body;
         
-        // Validate updates (optional)
+        // Validate updates
         const validation = Task.validateTask(updates, true);
         if (!validation.valid) {
             return res.status(400).json({
@@ -77,10 +101,8 @@ async function updateTask(req, res) {
             });
         }
         
-        // Call model
         const updatedTask = await Task.updateTask(id, updates);
         
-        // Check if found
         if (!updatedTask) {
             return res.status(404).json({
                 success: false,
@@ -88,7 +110,6 @@ async function updateTask(req, res) {
             });
         }
         
-        // Send response
         res.json({
             success: true,
             message: 'Task updated successfully',
@@ -102,15 +123,15 @@ async function updateTask(req, res) {
     }
 }
 
+/**
+ * Delete a task
+ */
 async function deleteTask(req, res) {
     try {
-        // Extract ID
         const { id } = req.params;
         
-        // Call model
         const deleted = await Task.deleteTask(id);
         
-        // Check if found
         if (!deleted) {
             return res.status(404).json({
                 success: false,
@@ -118,7 +139,6 @@ async function deleteTask(req, res) {
             });
         }
         
-        // Send response
         res.json({
             success: true,
             message: 'Task deleted successfully'
@@ -131,9 +151,11 @@ async function deleteTask(req, res) {
     }
 }
 
+/**
+ * Get tasks by status
+ */
 async function getTasksByStatus(req, res) {
     try {
-        // Extract status
         const { status } = req.params;
         
         // Validate status
@@ -145,40 +167,8 @@ async function getTasksByStatus(req, res) {
             });
         }
         
-        // Call model
         const tasks = await Task.getTasksByStatus(status);
         
-        // Send response
-        res.json({
-            success: true,
-            count: tasks.length,
-            data: tasks
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
-}
-async function getTasksByPriority(req, res) {
-    try {
-        // Extract priority
-        const { priority } = req.params;
-        
-        // Validate priority
-        const validPriorities = ['low', 'medium', 'high'];
-        if (!validPriorities.includes(priority)) {
-            return res.status(400).json({
-                success: false,
-                error: 'Invalid priority. Must be: low, medium, or high'
-            });
-        }
-        
-        // Call model
-        const tasks = await Task.getTasksByPriority(priority);
-        
-        // Send response
         res.json({
             success: true,
             count: tasks.length,
@@ -192,3 +182,45 @@ async function getTasksByPriority(req, res) {
     }
 }
 
+/**
+ * Get tasks by priority
+ */
+async function getTasksByPriority(req, res) {
+    try {
+        const { priority } = req.params;
+        
+        // Validate priority
+        const validPriorities = ['low', 'medium', 'high'];
+        if (!validPriorities.includes(priority)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid priority. Must be: low, medium, or high'
+            });
+        }
+        
+        const tasks = await Task.getTasksByPriority(priority);
+        
+        res.json({
+            success: true,
+            count: tasks.length,
+            data: tasks
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+module.exports = {
+    getAllTasks,
+    getTaskById,
+    createTask,
+    updateTask,
+    deleteTask,
+    getTasksByStatus,
+    getTasksByPriority
+};
+
+// Made with Bob
